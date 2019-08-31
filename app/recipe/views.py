@@ -6,37 +6,29 @@ from .serializers import TagSerializer, IngredientSerializer
 from core.models import Tag, Ingredient
 
 
-class TagViewSet(viewsets.GenericViewSet,
-                 mixins.ListModelMixin,
-                 mixins.CreateModelMixin):
-    """Mangage tags in database"""
+class BaseRecipeViewSet(viewsets.GenericViewSet,
+                        mixins.ListModelMixin,
+                        mixins.CreateModelMixin):
+    """Base class for recipe viewsets"""
     authentication_classes = (TokenAuthentication,)
     permission_classes = (IsAuthenticated,)
-    serializer_class = TagSerializer
-    queryset = Tag.objects.all()
 
     def get_queryset(self):
         """Return only those serializer for authenticated user"""
         return self.queryset.filter(user=self.request.user).order_by('-name')
 
     def perform_create(self, serializer):
-        """Create a new tag"""
+        """Create a new object"""
         serializer.save(user=self.request.user)
 
 
-class IngredientViewSet(viewsets.GenericViewSet,
-                        mixins.ListModelMixin,
-                        mixins.CreateModelMixin):
+class TagViewSet(BaseRecipeViewSet):
+    """Mangage tags in database"""
+    serializer_class = TagSerializer
+    queryset = Tag.objects.all()
+
+
+class IngredientViewSet(BaseRecipeViewSet):
     """Manage Ingredient in database"""
-    authentication_classes = (TokenAuthentication,)
-    permission_classes = (IsAuthenticated,)
     serializer_class = IngredientSerializer
     queryset = Ingredient.objects.all()
-
-    def get_queryset(self):
-        """Return only the ingredient names for authenticated user"""
-        return self.queryset.filter(user=self.request.user).order_by('-name')
-
-    def perform_create(self, serializer):
-        """Creates a new ingredient for user"""
-        serializer.save(user=self.request.user)
